@@ -26,18 +26,14 @@ namespace ldpc {
             std::vector<bool> pivots;
             std::vector<uint8_t> x;
             std::vector<uint8_t> b;
-
-            bool FULL_REDUCE{};
-
-            bool LU_ALLOCATED{};
-
-            bool LOWER_TRIANGULAR{};
-
-            int rank{};
+            bool FULL_REDUCE;
+            bool LU_ALLOCATED;
+            bool LOWER_TRIANGULAR;
+            int rank;
 
             RowReduce() = default;
 
-            explicit RowReduce(ldpc::gf2sparse::GF2Sparse<ENTRY_OBJ> &A) : A(A) {
+            RowReduce(ldpc::gf2sparse::GF2Sparse<ENTRY_OBJ> &A) : A(A) {
 
                 this->pivots.resize(this->A.n, false);
                 this->cols.resize(this->A.n);
@@ -94,12 +90,9 @@ namespace ldpc {
                         this->inv_cols[this->cols[i]] = i;
                     }
                 } else {
-                    if (cols.size() != this->A.n) {
-                        {
-                            throw std::invalid_argument("Input parameter `cols`\
+                    if (cols.size() != this->A.n)
+                        throw std::invalid_argument("Input parameter `cols`\
                 describing the row ordering is of the incorrect length");
-                        }
-                    }
                     // this->cols=cols;
                     for (int i = 0; i < this->A.n; i++) {
                         this->cols[i] = cols[i];
@@ -113,12 +106,9 @@ namespace ldpc {
                         this->inv_rows[this->rows[i]] = i;
                     }
                 } else {
-                    if (rows.size() != this->A.m) {
-                        {
-                            throw std::invalid_argument("Input parameter `rows`\
+                    if (rows.size() != this->A.m)
+                        throw std::invalid_argument("Input parameter `rows`\
                 describing the row ordering is of the incorrect length");
-                        }
-                    }
                     // this->rows=rows;
                     for (int i = 0; i < this->A.m; i++) {
                         this->rows[i] = rows[i];
@@ -148,7 +138,7 @@ namespace ldpc {
 
                     bool PIVOT_FOUND = false;
                     int max_row_weight = std::numeric_limits<int>::max();
-                    int swap_index = 0;
+                    int swap_index;
                     for (auto &e: this->U.iterate_column(pivot_index)) {
                         int row_index = e.row_index;
                         if (row_index < this->rank) {
@@ -178,29 +168,20 @@ namespace ldpc {
                         this->rows[this->rank] = temp1;
                     }
 
-                    if (this->LOWER_TRIANGULAR) {
-                        this->L.insert_entry(this->rank, this->rank);
-                    }
+                    if (this->LOWER_TRIANGULAR) this->L.insert_entry(this->rank, this->rank);
 
                     std::vector<int> add_rows;
                     for (auto &e: this->U.iterate_column(pivot_index)) {
                         int row_index = e.row_index;
-                        if (row_index > this->rank || row_index < this->rank && static_cast<bool>(this->FULL_REDUCE)) {
+                        if (row_index > this->rank || row_index < this->rank && this->FULL_REDUCE == true) {
                             add_rows.push_back(row_index);
                         }
                     }
 
                     for (int row: add_rows) {
                         this->U.add_rows(row, this->rank);
-                        if (this->LOWER_TRIANGULAR) {
-                            {
-                                this->L.insert_entry(row, this->rank);
-                            }
-                        } else {
-                            {
-                                this->L.add_rows(row, this->rank);
-                            }
-                        }
+                        if (this->LOWER_TRIANGULAR) this->L.insert_entry(row, this->rank);
+                        else this->L.add_rows(row, this->rank);
                     }
                     this->rank++;
                 }
@@ -236,11 +217,8 @@ namespace ldpc {
 
             std::vector<uint8_t> &lu_solve(std::vector<uint8_t> &y) {
 
-                if (y.size() != this->U.m) {
-                    {
-                        throw std::invalid_argument("Input parameter `y` is of the incorrect length for lu_solve.");
-                    }
-                }
+                if (y.size() != this->U.m)
+                    throw std::invalid_argument("Input parameter `y` is of the incorrect length for lu_solve.");
 
                 /*
                 Equation: Ax = y
@@ -323,7 +301,7 @@ namespace ldpc {
                     }
                     bool PIVOT_FOUND = false;
                     int max_row_weight = std::numeric_limits<int>::max();
-                    int swap_index = 0;
+                    int swap_index;
                     for (auto &e: this->U.iterate_column(pivot_index)) {
                         int row_index = e.row_index;
                         if (row_index < this->rank) {
@@ -356,7 +334,7 @@ namespace ldpc {
                     std::vector<int> add_rows;
                     for (auto &e: this->U.iterate_column(pivot_index)) {
                         int row_index = e.row_index;
-                        if (row_index > this->rank || row_index < this->rank && static_cast<bool>(this->FULL_REDUCE)) {
+                        if (row_index > this->rank || row_index < this->rank && this->FULL_REDUCE == true) {
                             add_rows.push_back(row_index);
                         }
                     }
@@ -405,9 +383,7 @@ namespace ldpc {
             rref_vrs(bool full_reduce = false, bool lower_triangular = false, std::vector<int> &cols = NULL_INT_VECTOR,
                      std::vector<int> &rows = NULL_INT_VECTOR) {
 
-                if (lower_triangular) {
-                    this->LOWER_TRIANGULAR = true;
-                }
+                if (lower_triangular) this->LOWER_TRIANGULAR = true;
                 this->set_column_row_orderings(cols, rows);
                 this->initialise_LU();
                 int max_rank = std::min(this->U.m, this->U.n);
@@ -418,20 +394,16 @@ namespace ldpc {
 
                     int pivot_index = this->cols[j];
 
-                    if (this->rank == max_rank) {
-                        break;
-                    }
+                    if (this->rank == max_rank) break;
 
 
                     bool PIVOT_FOUND = false;
                     int max_row_weight = std::numeric_limits<int>::max();
-                    int swap_index = 0;
+                    int swap_index;
                     for (auto &e: this->U.iterate_column(pivot_index)) {
                         // int row_index = e.row_index;
 
-                        if (this->inv_rows[e.row_index] < this->rank) {
-                            continue;
-                        }
+                        if (this->inv_rows[e.row_index] < this->rank) continue;
 
                         int row_weight = this->U.get_row_degree(e.row_index) + this->L.get_row_degree(e.row_index);
                         if (this->inv_rows[e.row_index] >= this->rank && row_weight < max_row_weight) {
@@ -442,9 +414,7 @@ namespace ldpc {
                         this->pivots[j] = true;
                     }
 
-                    if (!PIVOT_FOUND) {
-                        continue;
-                    }
+                    if (!PIVOT_FOUND) continue;
 
                     if (swap_index != this->rank) {
                         // cout<<"Swapping rows "<<swap_index<<" and "<<this->rank<<endl;
@@ -459,9 +429,7 @@ namespace ldpc {
 
                     }
 
-                    if (this->LOWER_TRIANGULAR) {
-                        this->L.insert_entry(this->rows[this->rank], this->rank);
-                    }
+                    if (this->LOWER_TRIANGULAR) this->L.insert_entry(this->rows[this->rank], this->rank);
                     // cout<<"Lower triangular: "<<endl;;
                     // print_sparse_matrix(*this->L);
                     // cout<<endl;
@@ -471,22 +439,15 @@ namespace ldpc {
                     for (auto &e: this->U.iterate_column(pivot_index)) {
                         // int row_index = e.row_index;
                         if (this->inv_rows[e.row_index] > this->rank ||
-                            this->inv_rows[e.row_index] < this->rank && full_reduce) {
+                            this->inv_rows[e.row_index] < this->rank && full_reduce == true) {
                             add_rows.push_back(e.row_index);
                         }
                     }
 
                     for (int row: add_rows) {
                         this->U.add_rows(row, this->rows[this->rank]);
-                        if (lower_triangular) {
-                            {
-                                this->L.insert_entry(row, this->rank);
-                            }
-                        } else {
-                            {
-                                this->L.add_rows(row, this->rows[this->rank]);
-                            }
-                        }
+                        if (lower_triangular) this->L.insert_entry(row, this->rank);
+                        else this->L.add_rows(row, this->rows[this->rank]);
                         // cout<<"Adding row "<<row<<" to row "<<this->rows[this->rank]<<endl;
                         // print_sparse_matrix(*this->U);
                         // cout<<endl;
@@ -517,11 +478,8 @@ namespace ldpc {
 
             std::vector<uint8_t> &lu_solve_vrs(std::vector<uint8_t> &y) {
 
-                if (y.size() != this->U.m) {
-                    {
-                        throw std::invalid_argument("Input parameter `y` is of the incorrect length for lu_solve.");
-                    }
-                }
+                if (y.size() != this->U.m)
+                    throw std::invalid_argument("Input parameter `y` is of the incorrect length for lu_solve.");
 
                 /*
                 Equation: Ax = y
@@ -542,7 +500,7 @@ namespace ldpc {
                 std::fill(this->b.begin(), this->b.end(), 0);
 
                 //Solves LUx=y
-                int row_sum = 0;
+                int row_sum;
 
 
 
@@ -624,13 +582,11 @@ namespace ldpc {
                     }
                 }
 
-                if (!PIVOT_FOUND) {
-                    continue;
-                }
+                if (!PIVOT_FOUND) continue;
 
                 std::swap(rr_col[rank], rr_col[swap_rows[rank]]);
 
-                add_rows.emplace_back();
+                add_rows.push_back(std::vector<int>{});
 
                 for (int i = rank + 1; i < mat.m; i++) {
                     if (rr_col[i] == 1) {
@@ -641,9 +597,7 @@ namespace ldpc {
 
                 rank++;
 
-                if (rank == max_rank) {
-                    break;
-                }
+                if (rank == max_rank) break;
 
             }
 
@@ -700,13 +654,11 @@ namespace ldpc {
                     }
                 }
 
-                if (!PIVOT_FOUND) {
-                    continue;
-                }
+                if (!PIVOT_FOUND) continue;
 
                 std::swap(cr_row[rank], cr_row[swap_cols[rank]]);
 
-                add_cols.emplace_back();
+                add_cols.push_back(std::vector<int>{});
 
                 for (int i = rank + 1; i < mat.n; i++) {
                     if (cr_row[i] == 1) {
@@ -717,9 +669,7 @@ namespace ldpc {
 
                 rank++;
 
-                if (rank == max_rank) {
-                    break;
-                }
+                if (rank == max_rank) break;
 
             }
 
@@ -776,13 +726,11 @@ namespace ldpc {
                     }
                 }
 
-                if (!PIVOT_FOUND) {
-                    continue;
-                }
+                if (!PIVOT_FOUND) continue;
 
                 std::swap(cr_row[rank], cr_row[swap_cols[rank]]);
 
-                add_cols.emplace_back();
+                add_cols.push_back(std::vector<int>{});
 
                 for (int i = rank + 1; i < mat.n; i++) {
                     if (cr_row[i] == 1) {
@@ -793,9 +741,7 @@ namespace ldpc {
 
                 rank++;
 
-                if (rank == max_rank) {
-                    break;
-                }
+                if (rank == max_rank) break;
 
             }
 
@@ -803,7 +749,7 @@ namespace ldpc {
 
             for (int j = 0; j < mat.n; j++) {
 
-                ker.emplace_back();
+                ker.push_back(std::vector<int>{});
 
                 std::fill(cr_row.begin(), cr_row.end(), 0);
 

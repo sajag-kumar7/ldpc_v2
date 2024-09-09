@@ -75,6 +75,18 @@ cdef class BpOsdDecoder(BpDecoderBase):
         if self.MEMORY_ALLOCATED:
             del self.osdD
 
+    def decode_osd(self, priors: np.ndarray) -> np.ndarray:
+
+        cdef int i
+        
+        out = np.zeros(self.n, dtype=int)
+
+        self.osdD.decode(self._syndrome, self.bpd.log_prob_ratios)
+        for i in range(self.n):
+            out[i] = self.osdD.osdw_decoding[i]
+
+        return out
+
     def decode(self, syndrome: np.ndarray) -> np.ndarray:
         """
         Decodes the input syndrome using the belief propagation and OSD decoding methods.

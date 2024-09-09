@@ -18,6 +18,7 @@ cdef extern from "osd.hpp" namespace "ldpc::osd" nogil:
     cdef cppclass OsdDecoderCpp "ldpc::osd::OsdDecoder":
         OsdDecoderCpp(BpSparse& parity_check_matrix, OsdMethod osd_method, int osd_order, vector[double] channel_probabilities) except +
         vector[uint8_t]& decode(vector[uint8_t]& syndrome, vector[double]& log_prob_ratios)
+        vector[uint8_t]& decode_osd(vector[uint8_t]& priors, vector[double]& log_prob_ratios)
         vector[uint8_t] osd0_decoding
         vector[uint8_t] osdw_decoding
         OsdMethod osd_method

@@ -1,6 +1,6 @@
-import pkg_resources
+# import pkg_resources
 
-__version__ = pkg_resources.get_distribution("ldpc").version
+# __version__ = pkg_resources.get_distribution("ldpc").version
 
 from ldpc.bp_decoder import BpDecoder
 from ldpc.bposd_decoder import BpOsdDecoder
